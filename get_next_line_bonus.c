@@ -1,21 +1,23 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   get_next_line.c                                    :+:      :+:    :+:   */
+/*   get_next_line_bonus.c                              :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: jretter <jretter@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/05/13 10:57:02 by jretter           #+#    #+#             */
-/*   Updated: 2024/05/15 14:21:43 by jretter          ###   ########.fr       */
+/*   Created: 2024/05/13 10:57:22 by jretter           #+#    #+#             */
+/*   Updated: 2024/05/15 14:12:43 by jretter          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "get_next_line.h"
+// Verwendung eines Arrays zur Verwaltung mehrerer Dateideskriptoren
+
+#include "get_next_line_bonus.h"
 
 static char	*ft_get_line(char *speicher)
 {
 	int		i;
-	char	*sneu;
+	char	*s;
 
 	i = 0;
 	if (!speicher[i])
@@ -24,12 +26,12 @@ static char	*ft_get_line(char *speicher)
 		i++;
 	if (speicher[i] == '\n')
 		i++;
-	sneu = (char *)malloc(sizeof(char) * (i + 1));
-	if (!sneu)
+	s = (char *)malloc(sizeof(char) * (i + 1));
+	if (!s)
 		return (NULL);
-	ft_memcpy(sneu, speicher, i);
-	sneu[i] = '\0';
-	return (sneu);
+	ft_memcpy(s, speicher, i);
+	s[i] = '\0';
+	return (s);
 }
 
 static char	*ft_new_stat(char *speicher)
@@ -60,6 +62,8 @@ static char	*read_str(int fd, char *speicher)
 			return (free(speicher), NULL);
 		buffer[read_bytes] = '\0';
 		speicher = ft_strjoin(speicher, buffer);
+		if (!speicher)
+			return (NULL);
 	}
 	return (speicher);
 }
@@ -67,59 +71,19 @@ static char	*read_str(int fd, char *speicher)
 char	*get_next_line(int fd)
 {
 	char		*next_line;
-	static char	*speicher;
+	static char	*speicher[OPEN_MAX];
 
-	if (fd < 0 || BUFFER_SIZE <= 0)
+	if (fd < 0 || BUFFER_SIZE <= 0 || fd >= OPEN_MAX)
 		return (NULL);
-	speicher = read_str(fd, speicher);
-	if (!speicher)
+	speicher[fd] = read_str(fd, speicher[fd]);
+	if (!speicher[fd])
 		return (NULL);
-	next_line = ft_get_line(speicher);
-	if (!next_line || next_line[0] == '\0')
+	next_line = ft_get_line(speicher[fd]);
+	if (!next_line)
 	{
-		if (speicher)
-		{
-			free(speicher);
-			speicher = NULL;
-		}
-		return (NULL);
+		free(speicher[fd]);
+		speicher[fd] = NULL;
 	}
-	speicher = ft_new_stat(speicher);
+	speicher[fd] = ft_new_stat(speicher[fd]);
 	return (next_line);
 }
-
-// int	main(void)
-// {
-// 	int		fd1;
-// 	int		fd2;
-// 	char	*line;
-
-// 	fd1 = open("file1.txt", O_RDONLY);
-// 	fd2 = open("file2.txt", O_RDONLY);
-// 	if (fd1 == -1 || fd2 == -1)
-// 	{
-// 		perror("Error opening file");
-// 		return (1);
-// 	}
-// 	printf("Reading lines from file1 and file2:\n\n");
-// 	while ((line = get_next_line(fd1)) || (line = get_next_line(fd2)))
-// 	{
-// 		if (line)
-// 		{
-// 			printf("%s", line);
-// 			free(line);
-// 		}
-// 		printf("\n");
-// 		line = get_next_line(fd2);
-// 		if (line)
-// 		{
-// 			printf("%s", line);
-// 			free(line);
-// 		}
-// 		printf("\n");
-// 	}
-// 	close(fd1);
-// 	close(fd2);
-// 	return (0);
-// }
-//
